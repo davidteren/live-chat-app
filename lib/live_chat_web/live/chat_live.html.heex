@@ -1,0 +1,232 @@
+<div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-200">
+  <!-- Header -->
+  <header class="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-sm transition-colors duration-200">
+    <div class="max-w-4xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">LiveChat</h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Real-time messaging with Phoenix LiveView</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <!-- Dark Mode Toggle -->
+          <button
+            id="dark-mode-toggle"
+            type="button"
+            class="p-2 rounded-lg bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors duration-200"
+            aria-label="Toggle dark mode"
+          >
+            <!-- Sun Icon (visible in dark mode) -->
+            <svg class="hidden dark:block w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
+            </svg>
+            <!-- Moon Icon (visible in light mode) -->
+            <svg class="block dark:hidden w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+            </svg>
+          </button>
+
+          <!-- Active Users Count -->
+          <div class="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-slate-700 rounded-lg transition-colors duration-200">
+            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span class="text-indigo-600 dark:text-indigo-400"><%= @active_users %></span> active
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <!-- Messages Container -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 mb-6 transition-colors duration-200">
+      <div class="h-[500px] overflow-y-auto p-4 space-y-4" id="messages-container">
+        <%= if @messages == [] do %>
+          <div class="flex items-center justify-center h-full">
+            <div class="text-center">
+              <.icon name="hero-chat-bubble-left-right" class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+              <p class="text-gray-500 dark:text-gray-400 text-lg font-medium">No messages yet</p>
+              <p class="text-gray-400 dark:text-gray-500 text-sm">Be the first to start the conversation!</p>
+            </div>
+          </div>
+        <% else %>
+          <%= for message <- @messages do %>
+            <div class="group">
+              <!-- Message Bubble -->
+              <div class="flex items-start gap-3">
+                <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                  <%= String.first(message.author) |> String.upcase() %>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-baseline gap-2 mb-1">
+                    <span class="font-semibold text-gray-900 dark:text-gray-100"><%= message.author %></span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                      <%= Calendar.strftime(message.inserted_at, "%I:%M %p") %>
+                    </span>
+                  </div>
+                  <div class="bg-gray-50 dark:bg-slate-700 rounded-lg px-4 py-2 inline-block max-w-full transition-colors duration-200">
+                    <p class="text-gray-800 dark:text-gray-100 break-words"><%= message.content %></p>
+                  </div>
+
+                  <!-- Reactions -->
+                  <div class="flex items-center gap-2 mt-2">
+                    <!-- Thumbs Up -->
+                    <button
+                      phx-click="toggle_reaction"
+                      phx-value-message_id={message.id}
+                      phx-value-type="thumbs_up"
+                      class="flex items-center gap-1 px-2 py-1 rounded-full bg-white dark:bg-slate-600 border border-gray-200 dark:border-slate-500 hover:border-indigo-300 dark:hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-500 transition-colors duration-200"
+                    >
+                      <span class="text-base">👍</span>
+                      <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                        <%= count_reactions(message.reactions, "thumbs_up") %>
+                      </span>
+                    </button>
+
+                    <!-- Thumbs Down -->
+                    <button
+                      phx-click="toggle_reaction"
+                      phx-value-message_id={message.id}
+                      phx-value-type="thumbs_down"
+                      class="flex items-center gap-1 px-2 py-1 rounded-full bg-white dark:bg-slate-600 border border-gray-200 dark:border-slate-500 hover:border-indigo-300 dark:hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-500 transition-colors duration-200"
+                    >
+                      <span class="text-base">👎</span>
+                      <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                        <%= count_reactions(message.reactions, "thumbs_down") %>
+                      </span>
+                    </button>
+
+                    <!-- Heart -->
+                    <button
+                      phx-click="toggle_reaction"
+                      phx-value-message_id={message.id}
+                      phx-value-type="heart"
+                      class="flex items-center gap-1 px-2 py-1 rounded-full bg-white dark:bg-slate-600 border border-gray-200 dark:border-slate-500 hover:border-red-300 dark:hover:border-red-400 hover:bg-red-50 dark:hover:bg-slate-500 transition-colors duration-200"
+                    >
+                      <span class="text-base">❤️</span>
+                      <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                        <%= count_reactions(message.reactions, "heart") %>
+                      </span>
+                    </button>
+
+                    <!-- Laugh -->
+                    <button
+                      phx-click="toggle_reaction"
+                      phx-value-message_id={message.id}
+                      phx-value-type="laugh"
+                      class="flex items-center gap-1 px-2 py-1 rounded-full bg-white dark:bg-slate-600 border border-gray-200 dark:border-slate-500 hover:border-yellow-300 dark:hover:border-yellow-400 hover:bg-yellow-50 dark:hover:bg-slate-500 transition-colors duration-200"
+                    >
+                      <span class="text-base">😂</span>
+                      <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                        <%= count_reactions(message.reactions, "laugh") %>
+                      </span>
+                    </button>
+
+                    <!-- Party -->
+                    <button
+                      phx-click="toggle_reaction"
+                      phx-value-message_id={message.id}
+                      phx-value-type="party"
+                      class="flex items-center gap-1 px-2 py-1 rounded-full bg-white dark:bg-slate-600 border border-gray-200 dark:border-slate-500 hover:border-purple-300 dark:hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-slate-500 transition-colors duration-200"
+                    >
+                      <span class="text-base">🎉</span>
+                      <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                        <%= count_reactions(message.reactions, "party") %>
+                      </span>
+                    </button>
+
+                    <!-- Think -->
+                    <button
+                      phx-click="toggle_reaction"
+                      phx-value-message_id={message.id}
+                      phx-value-type="think"
+                      class="flex items-center gap-1 px-2 py-1 rounded-full bg-white dark:bg-slate-600 border border-gray-200 dark:border-slate-500 hover:border-gray-300 dark:hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-slate-500 transition-colors duration-200"
+                    >
+                      <span class="text-base">🤔</span>
+                      <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                        <%= count_reactions(message.reactions, "think") %>
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Message Input Form -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-4 transition-colors duration-200">
+      <.form for={@form} phx-submit="send_message" id="message-form" class="space-y-3">
+        <div class="flex gap-3">
+          <div class="w-1/4">
+            <.input
+              field={@form[:author]}
+              type="text"
+              placeholder="Your name"
+              required
+              class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
+            />
+          </div>
+          <div class="flex-1">
+            <.input
+              field={@form[:content]}
+              type="text"
+              placeholder="Type your message..."
+              required
+              class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
+            />
+          </div>
+          <button
+            type="submit"
+            class="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 text-white font-medium rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:ring-offset-slate-800 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors duration-200"
+          >
+            Send
+          </button>
+        </div>
+      </.form>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Auto-scroll to bottom when new messages arrive
+  const container = document.getElementById('messages-container');
+  if (container) {
+    container.scrollTop = container.scrollHeight;
+  }
+
+  // Dark mode toggle functionality
+  (function() {
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const htmlElement = document.documentElement;
+
+    // Check for saved dark mode preference or default to light mode
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    // Apply saved theme or system preference
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      htmlElement.classList.add('dark');
+    } else {
+      htmlElement.classList.remove('dark');
+    }
+
+    // Toggle dark mode on button click
+    if (darkModeToggle) {
+      darkModeToggle.addEventListener('click', function() {
+        htmlElement.classList.toggle('dark');
+
+        // Save preference to localStorage
+        if (htmlElement.classList.contains('dark')) {
+          localStorage.setItem('theme', 'dark');
+        } else {
+          localStorage.setItem('theme', 'light');
+        }
+      });
+    }
+  })();
+</script>
+

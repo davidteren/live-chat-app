@@ -12,6 +12,8 @@ defmodule LiveChat.Application do
       LiveChat.Repo,
       {DNSCluster, query: Application.get_env(:live_chat, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: LiveChat.PubSub},
+      # Start the Presence system
+      LiveChatWeb.Presence,
       # Start a worker by calling: LiveChat.Worker.start_link(arg)
       # {LiveChat.Worker, arg},
       # Start to serve requests, typically the last entry
